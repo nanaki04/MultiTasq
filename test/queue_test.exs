@@ -6,16 +6,16 @@ defmodule MultiTasq.QueueTest do
     IO.puts "\nInitializing a MultiTasq.Queue with name :q"
     MultiTasq.Queue.start_link(:q)
 
-    task = %MultiTasq.Task{handler: fn(id, _val, done) ->
+    task = %MultiTasq.Task{handler: fn(_val) ->
       IO.puts("task 1 procced")
       :timer.sleep(100)
-      done.(id, [:task_1_done])
+      [:task_1_done]
     end}
 
-    task2 = %MultiTasq.Task{handler: fn(id, val, done) ->
+    task2 = %MultiTasq.Task{handler: fn(val) ->
       IO.puts("task 2 procced")
       assert val === [:task_1_done]
-      done.(id, [:task_2_done | val])
+      [:task_2_done | val]
     end}
 
     [task: task, task2: task2]

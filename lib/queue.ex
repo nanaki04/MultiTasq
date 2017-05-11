@@ -139,16 +139,17 @@ defmodule MultiTasq.Queue do
   end
 
   defp run_executable(%MultiTasq.Queue{ready_for_execution: []} = state), do:
-    state
+    {:ok, state}
   defp run_executable(%MultiTasq.Queue{queue_id: queue_id, value: value, ready_for_execution: ready_for_execution}) do
     task = hd(ready_for_execution)
     {:ok, state} = update_state(queue_id, 
       ready_for_execution: tl(ready_for_execution),
       processing: true
     )
-    executable = MultiTasq.Task.get_executable(task, queue_id, value, &MultiTasq.Queue.on_task_finished/2)
-    MultiTasq.TaskSupervisor.execute_task(executable)
-    state
+    task
+    |> Map.put(:value, value)
+    |> MultiTasq.TaskSupervisor.execute_task(fn(value) -> IO.inspect(value); IO.inspect(queue_id); on_task_finished(queue_id, value) end)
+    {:ok, state}
   end
 
   # Server Callbacks

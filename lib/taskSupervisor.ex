@@ -11,14 +11,15 @@ defmodule MultiTasq.TaskSupervisor do
 
   def init(:ok) do
     children = [
-      worker(Task, [], restart: :transient)
+      worker(MultiTasq.Task, [], restart: :transient)
     ]
 
     supervise(children, strategy: :simple_one_for_one)
   end
 
-  def execute_task(executable) do
-    Supervisor.start_child(__MODULE__, [executable])
+  def execute_task(%MultiTasq.Task{} = task, on_finished) do
+    {:ok, task_id} = Supervisor.start_child(__MODULE__, [task])
+    MultiTasq.Task.execute(task_id, on_finished)
   end
 
 end
