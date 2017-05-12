@@ -29,6 +29,11 @@ defmodule MultiTasq.Queue do
     queue
   end
 
+  # Stop
+
+  def stop(queue_id), do:
+    GenServer.stop(queue_id, :normal)
+
   # Push Tasks
 
   def push(queue, %MultiTasq.Task{} = task), do:
@@ -140,6 +145,7 @@ defmodule MultiTasq.Queue do
 
   defp run_executable(%MultiTasq.Queue{ready_for_execution: []} = state), do:
     {:ok, state}
+
   defp run_executable(%MultiTasq.Queue{queue_id: queue_id, value: value, ready_for_execution: ready_for_execution}) do
     task = hd(ready_for_execution)
     {:ok, state} = update_state(queue_id, 
@@ -148,7 +154,7 @@ defmodule MultiTasq.Queue do
     )
     task
     |> Map.put(:value, value)
-    |> MultiTasq.TaskSupervisor.execute_task(fn(value) -> IO.inspect(value); IO.inspect(queue_id); on_task_finished(queue_id, value) end)
+    |> MultiTasq.TaskSupervisor.execute_task(fn(value) -> on_task_finished(queue_id, value) end)
     {:ok, state}
   end
 
@@ -156,10 +162,15 @@ defmodule MultiTasq.Queue do
 
   # Push Tasks
 
-  def handle_call({:push, task}, _, %MultiTasq.Queue{entrance_hall: []} = state), do:
-    {:reply, {:ok, state}, Map.put(state, :entrance_hall, [task])}
-  def handle_call({:push, task}, _, %MultiTasq.Queue{} = state), do:
-    {:reply, {:ok, state}, Map.put(state, :entrance_hall, [task | state.entrance_hall])}
+  def handle_call({:push, task}, _, %MultiTasq.Queue{entrance_hall: []} = state) do
+    state = Map.put(state, :entrance_hall, [task]);
+    {:reply, {:ok, state}, state}
+  end
+
+  def handle_call({:push, task}, _, %MultiTasq.Queue{} = state) do
+    state = Map.put(state, :entrance_hall, [task | state.entrance_hall])
+    {:reply, {:ok, state}, state}
+  end
 
   # Generic State Updater
 

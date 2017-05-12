@@ -7,14 +7,21 @@ defmodule MultiTasq do
   Returns {:ok, pid}
   """
   def setup_queue() do
-    MultiTasq.Queue.start_link()
+    MultiTasq.QueueSupervisor.start_queue()
   end
 
   @doc """
   Returns {:ok, pid}
   """
   def setup_queue(name) do
-    MultiTasq.Queue.start_link(name)
+    MultiTasq.QueueSupervisor.start_queue(name)
+  end
+
+  @doc """
+  Returns :ok
+  """
+  def stop_queue(queue) do
+    MultiTasq.Queue.stop(queue)
   end
 
   @doc """
@@ -59,24 +66,39 @@ defmodule MultiTasq do
     MultiTasq.Queue.close_floodgate(queue)
   end
 
+  @doc """
+  Returns {:ok, pid}
+  """
   def setup_multitask() do
-
+    MultiTasq.MultiTaskSupervisor.start_multitask()
   end
 
+  @doc """
+  Returns {:ok, pid}
+  """
   def setup_multitask(name) do
-
+    MultiTasq.MultiTaskSupervisor.start_multitask(name)
   end
 
+  @doc """
+  Returns :ok
+  """
+  def stop_multitask(multitask_id) do
+    MultiTasq.MultiTask.stop(multitask_id)
+  end
+
+  @doc """
+  Returns {:ok, %MultiTasq.MultiTask{}}
+  """
   def add_multi_task(multitask_id, %MultiTasq.Task{} = task) do
-
+    MultiTasq.MultiTask.push(multitask_id, task)
   end
 
-  def on_multitask_end(multitask_id, lambda) do
-
-  end
-
-  def run_multitask(multitask_id) do
-
+  @doc """
+  Returns {:ok, %MultiTasq.MultiTask{}}
+  """
+  def run_multitask(multitask_id, on_finished) do
+    MultiTasq.MultiTask.run(multitask_id, on_finished)
   end
 
 end

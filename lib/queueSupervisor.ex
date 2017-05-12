@@ -5,6 +5,10 @@ defmodule MultiTasq.QueueSupervisor do
     Supervisor.start_link(__MODULE__, :ok, name: __MODULE__)
   end
 
+  def start_queue() do
+    Supervisor.start_child(__MODULE__, [])
+  end
+
   def start_queue(name) do
     Supervisor.start_child(__MODULE__, [name])
   end

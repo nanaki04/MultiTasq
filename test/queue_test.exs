@@ -109,4 +109,10 @@ defmodule MultiTasq.QueueTest do
     {:ok, state} = MultiTasq.Queue.get_state(:q)
     assert state.value === [:task_2_done, :task_1_done]
   end
+
+  test "stop the queue server", _ do
+    pid = Process.whereis(:q)
+    MultiTasq.Queue.stop(:q)
+    assert !Process.alive?(pid)
+  end
 end
