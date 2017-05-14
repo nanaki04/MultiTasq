@@ -115,4 +115,14 @@ defmodule MultiTasq.QueueTest do
     MultiTasq.Queue.stop(:q)
     assert !Process.alive?(pid)
   end
+
+  test "pushing a task when running but not yet processing, should execute the task automatically", context do
+    task = context[:task]
+    MultiTasq.Queue.run(:q)
+    :timer.sleep(50)
+    MultiTasq.Queue.push(:q, task)
+    :timer.sleep(150)
+    {:ok, state} = MultiTasq.Queue.get_state(:q)
+    assert state.value === [:task_1_done]
+  end
 end
