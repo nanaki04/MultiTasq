@@ -36,8 +36,11 @@ defmodule MultiTasq.Queue do
 
   # Push Tasks
 
-  def push(queue, %MultiTasq.Task{} = task), do:
-    GenServer.call(queue, {:push, task})
+  def push(queue, %MultiTasq.Task{} = task) do
+    with {:ok, %MultiTasq.Queue{running: true, processing: false} = state} <- GenServer.call(queue, {:push, task}) do
+      run_next_task(queue, state)
+    end
+  end
 
   # Run
 
@@ -48,8 +51,8 @@ defmodule MultiTasq.Queue do
 
   # Loop Task Execution Handlers
 
-  def run_next_task(queue), do:
-    run_next_task(queue, get_state!(queue))
+  def run_next_task(_queue, %MultiTasq.Queue{running: false} = state), do:
+    {:ok, state}
 
   def run_next_task(queue, %MultiTasq.Queue{paused: true}), do:
     update_state(queue, processing: false)
@@ -73,8 +76,8 @@ defmodule MultiTasq.Queue do
   end
 
   def on_task_finished(queue, value) do
-    update_state(queue, value: value)
-    run_next_task(queue)
+    {:ok, state} = update_state(queue, value: value)
+    run_next_task(queue, state)
   end
 
   # Floodgate Maintenance
@@ -90,8 +93,8 @@ defmodule MultiTasq.Queue do
   end
 
   def open_floodgate(queue_id, %MultiTasq.Queue{queue_id: queue_id, processing: false}) do
-    update_state(queue_id, floodgate: :open)
-    run_next_task(queue_id)
+    {:ok, state} = update_state(queue_id, floodgate: :open)
+    run_next_task(queue_id, state)
   end
 
   def close_floodgate(queue_id), do:
